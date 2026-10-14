@@ -1,0 +1,236 @@
+{% comment %}
+  Paulie's Store Locator
+  Reads the published "Store Locator" tab (built from Current Accounts) as CSV.
+  Expected columns: Account, Type, Neighborhood, Address, Lat, Lng
+{% endcomment %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<div class="psl" id="psl-{{ section.id }}"
+     data-csv="{{ section.settings.csv_url | escape }}"
+     style="--psl-accent: {{ section.settings.accent }}; --psl-map-h: {{ section.settings.map_height }}px;">
+  {% if section.settings.heading != blank %}
+    <h2 class="psl__heading">{{ section.settings.heading }}</h2>
+  {% endif %}
+  {% if section.settings.subheading != blank %}
+    <p class="psl__sub">{{ section.settings.subheading }}</p>
+  {% endif %}
+
+  <div class="psl__controls">
+    <input class="psl__search" type="search" placeholder="Search by name, neighborhood, or zip" aria-label="Search stores">
+    <button class="psl__btn psl__near" type="button">Near me</button>
+  </div>
+  <div class="psl__filters" role="group" aria-label="Filter by type">
+    <button type="button" class="psl__chip is-active" data-filter="all">All</button>
+    <button type="button" class="psl__chip" data-filter="retail">Grab a 4-pack</button>
+    <button type="button" class="psl__chip" data-filter="onprem">Bars &amp; restaurants</button>
+  </div>
+
+  <div class="psl__body">
+    <div class="psl__map" aria-label="Map of stores"></div>
+    <div class="psl__list-wrap">
+      <p class="psl__count" aria-live="polite">Loading stores…</p>
+      <ul class="psl__list"></ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  .psl { max-width: 1200px; margin: 0 auto; padding: 40px 16px; }
+  .psl__heading { margin: 0 0 8px; text-align: center; }
+  .psl__sub { margin: 0 0 24px; text-align: center; opacity: .8; }
+  .psl__controls { display: flex; gap: 8px; margin-bottom: 12px; }
+  .psl__search { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid rgba(0,0,0,.25); border-radius: 6px; font: inherit; }
+  .psl__btn { padding: 12px 16px; border: 0; border-radius: 6px; background: var(--psl-accent); color: #fff; font: inherit; cursor: pointer; white-space: nowrap; }
+  .psl__filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .psl__chip { padding: 6px 14px; border: 1px solid var(--psl-accent); border-radius: 999px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+  .psl__chip.is-active { background: var(--psl-accent); color: #fff; }
+  .psl__body { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .psl__map { height: var(--psl-map-h); border-radius: 8px; z-index: 0; }
+  .psl__list-wrap { max-height: var(--psl-map-h); overflow-y: auto; }
+  .psl__count { margin: 0 0 8px; font-size: .9em; opacity: .75; }
+  .psl__list { list-style: none; margin: 0; padding: 0; }
+  .psl__item { padding: 12px; border-bottom: 1px solid rgba(0,0,0,.1); cursor: pointer; }
+  .psl__item:hover, .psl__item.is-active { background: rgba(0,0,0,.04); }
+  .psl__name { font-weight: 700; margin: 0 0 2px; }
+  .psl__meta { margin: 0 0 2px; font-size: .9em; opacity: .75; }
+  .psl__addr { margin: 0 0 4px; font-size: .9em; }
+  .psl__dir { font-size: .9em; color: var(--psl-accent); }
+  @media (min-width: 900px) {
+    .psl__body { grid-template-columns: 2fr 1fr; }
+  }
+  @media (max-width: 899px) {
+    .psl__list-wrap { max-height: none; }
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  var root = document.getElementById('psl-{{ section.id }}');
+  if (!root || root.dataset.init) return;
+  root.dataset.init = '1';
+
+  var csvUrl = root.dataset.csv;
+  var countEl = root.querySelector('.psl__count');
+  var listEl = root.querySelector('.psl__list');
+  var searchEl = root.querySelector('.psl__search');
+  var accent = getComputedStyle(root).getPropertyValue('--psl-accent').trim() || '#c0392b';
+
+  if (!csvUrl) { countEl.textContent = 'Store list coming soon.'; return; }
+
+  var map = L.map(root.querySelector('.psl__map'), { scrollWheelZoom: false }).setView([34.05, -118.35], 10);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+  }).addTo(map);
+
+  var stores = [];
+  var filter = 'all';
+  var userPos = null;
+
+  function pick(row, names) {
+    for (var k in row) {
+      if (names.indexOf(k.trim().toLowerCase()) !== -1) return String(row[k] || '').trim();
+    }
+    return '';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function distanceMiles(a, b) {
+    var R = 3958.8, toRad = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * toRad, dLng = (b.lng - a.lng) * toRad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(a.lat * toRad) * Math.cos(b.lat * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  function render() {
+    var q = searchEl.value.trim().toLowerCase();
+    var visible = stores.filter(function (s) {
+      if (filter !== 'all' && s.kind !== filter) return false;
+      if (!q) return true;
+      return (s.name + ' ' + s.neighborhood + ' ' + s.address + ' ' + s.typeLabel).toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (userPos) {
+      visible.forEach(function (s) { s.dist = s.hasPos ? distanceMiles(userPos, s) : Infinity; });
+      visible.sort(function (a, b) { return a.dist - b.dist; });
+    }
+
+    var bounds = [];
+    stores.forEach(function (s) { if (s.marker) map.removeLayer(s.marker); });
+    listEl.innerHTML = '';
+
+    visible.forEach(function (s) {
+      if (s.hasPos) {
+        map.addLayer(s.marker);
+        bounds.push([s.lat, s.lng]);
+      }
+      var li = document.createElement('li');
+      li.className = 'psl__item';
+      var dist = (userPos && isFinite(s.dist)) ? ' · ' + s.dist.toFixed(1) + ' mi' : '';
+      li.innerHTML =
+        '<p class="psl__name">' + escapeHtml(s.name) + '</p>' +
+        '<p class="psl__meta">' + escapeHtml([s.typeLabel, s.neighborhood].filter(Boolean).join(' · ')) + dist + '</p>' +
+        '<p class="psl__addr">' + escapeHtml(s.address) + '</p>' +
+        '<a class="psl__dir" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' +
+          encodeURIComponent(s.name + ', ' + s.address) + '">Directions</a>';
+      li.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A' || !s.hasPos) return;
+        map.setView([s.lat, s.lng], 15);
+        s.marker.openPopup();
+      });
+      listEl.appendChild(li);
+    });
+
+    countEl.textContent = visible.length + (visible.length === 1 ? ' location' : ' locations');
+    if (bounds.length === 1) map.setView(bounds[0], 14);
+    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+  }
+
+  Papa.parse(csvUrl + (csvUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now(), {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function (res) {
+      var seen = {};
+      res.data.forEach(function (row) {
+        var name = pick(row, ['account', 'name', 'account name']);
+        var address = pick(row, ['address', 'business address']);
+        if (!name || !address) return;
+        var dedupeKey = (name + '|' + address).toLowerCase();
+        if (seen[dedupeKey]) return;
+        seen[dedupeKey] = true;
+
+        var type = pick(row, ['type']);
+        var lat = parseFloat(pick(row, ['lat', 'latitude']));
+        var lng = parseFloat(pick(row, ['lng', 'lon', 'long', 'longitude']));
+        var s = {
+          name: name,
+          address: address,
+          neighborhood: pick(row, ['neighborhood']),
+          kind: /on-?premise/i.test(type) ? 'onprem' : 'retail',
+          typeLabel: (type.split(/\s[—–-]\s/)[1] || type).trim(),
+          lat: lat,
+          lng: lng,
+          hasPos: isFinite(lat) && isFinite(lng)
+        };
+        if (s.hasPos) {
+          s.marker = L.circleMarker([lat, lng], {
+            radius: 8, color: '#fff', weight: 2, fillColor: accent, fillOpacity: 1
+          }).bindPopup(
+            '<strong>' + escapeHtml(name) + '</strong><br>' + escapeHtml(address) +
+            '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' +
+            encodeURIComponent(name + ', ' + address) + '">Directions</a>'
+          );
+        }
+        stores.push(s);
+      });
+      stores.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      render();
+    },
+    error: function () { countEl.textContent = 'Could not load stores. Please try again later.'; }
+  });
+
+  searchEl.addEventListener('input', render);
+
+  root.querySelectorAll('.psl__chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      root.querySelectorAll('.psl__chip').forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      filter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  root.querySelector('.psl__near').addEventListener('click', function () {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (p) {
+      userPos = { lat: p.coords.latitude, lng: p.coords.longitude };
+      render();
+      map.setView([userPos.lat, userPos.lng], 12);
+    }, function () { alert('Could not get your location.'); });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Paulie's store locator",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Find Paulie's" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Grab a 4-pack or find us on tap around LA." },
+    { "type": "text", "id": "csv_url", "label": "Published Google Sheet CSV URL", "info": "File > Share > Publish to web > 'Store Locator' tab > CSV" },
+    { "type": "color", "id": "accent", "label": "Accent color", "default": "#c0392b" },
+    { "type": "range", "id": "map_height", "label": "Map height (px)", "min": 300, "max": 800, "step": 20, "default": 520 }
+  ],
+  "presets": [{ "name": "Paulie's store locator" }]
+}
+{% endschema %}
