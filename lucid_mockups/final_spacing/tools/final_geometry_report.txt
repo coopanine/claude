@@ -1,0 +1,44 @@
+LID ZONE (y 8.50 -> 53.50)
+  logo            y 12.432-22.947  cx 94.936  (axis 94.936, moved dx +0.246)
+  TESTIDE         y 32.827-43.894  w 55.50  cap h 10.70  scale 1.0000  dy -1.095
+  tagline         y 47.540-49.581  cap h 1.97
+  white space: top crease->logo 3.807 | logo->dashed 5.733 | dashed->TESTIDE 3.794 | TESTIDE->tagline 3.647 | tagline->crease 3.794
+CENTRE COLUMN (body zone y 53.50 -> 148.15)
+  scales: powered 1.1191  statue 1.1191  bottom text 1.1191
+  POWERED frame   y 58.323-64.682  x 75.838-114.033  (38.20 x 6.36)  text cap h 2.49
+  statue          y 70.001-135.196  x 71.994-117.878  (45.88 x 65.20)
+  rule            y 139.651  x 72.697-117.174  (w 44.48)
+  bottom text     y 143.197-144.708  baseline 144.688  x 72.697-117.174  cap h 1.471
+  gaps: crease->frame 4.698 | frame->statue 5.319 | statue->rule 4.455 | rule->text 3.547 | baseline->crease 3.336
+  tagline->frame (across crease) 8.743 | facts box -> statue clearance 22.91
+LEFT COLUMN
+  facts box       y 58.500-131.410  x 4.976-48.906
+  other ingr.     top 133.225  last baseline 137.946
+  distributed by  top 140.789  baselines 142.256 / 144.688  (last baseline -> crease 3.336)
+PROTOCOL PANEL
+  box             y 58.500-143.150  x 135.627-184.895   margins to creases: top 4.702 / bottom 4.702
+  type scale 1.0500
+    title_top        63.152
+    title_base       66.590
+    dir_top          71.070
+    dir_base         73.079
+    num_top          75.756
+    num_bot          79.194
+    steps_top        80.519
+    steps_base       83.928
+    warn_top         88.408
+    warn_base        90.407
+    body_top         92.450
+    body_base       101.659
+    stor_top        106.138
+    stor_base       108.160
+    stxt_top        110.203
+    stxt_base       111.740
+    fda_outer_top   116.219
+    fda_outer_bot   125.728
+    upc_top         130.207
+    upc_bot         138.497
+  gaps (mm):  a=4.480  b=4.480  c=2.676  d=1.325  e=4.480  f=2.043  g=4.480  h=2.043  i=4.480  j=4.480  k=4.480
+  source gaps: a=3.079  b=3.491  c=2.549  d=1.262  e=4.003  f=1.946  g=4.057  h=1.687  i=3.688  j=8.751  k=1.680
+  step column centres 143.463, 160.261, 177.059 (panel axis 160.261); side margins L 2.82 / R 4.32
+  FDA box x 137.721-182.801  side margin 1.838   UPC y 130.207-138.497
