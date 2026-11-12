@@ -199,7 +199,7 @@ def _num(v):
     return d
 
 
-def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference"):
+def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None):
     """write a new PDF: transformed art + untouched dieline, cropped to the label, 1:1 scale"""
     ops = src.ops
     objs = src.objs
@@ -282,6 +282,22 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference"):
                 raise ValueError(op)
             new_ops[k] = pikepdf.ContentStreamInstruction([_num(v) for v in b], ins.operator)
 
+    # ---------- 3b. optional recolour (uses the spot inks already defined in the file) ----------
+    before, after = {}, {}
+    for i, cs in (recolor or {}).items():
+        o = objs[i]
+        stroke = o['op'] == 'S'
+        setc = [pikepdf.ContentStreamInstruction([pikepdf.Name(cs)], pikepdf.Operator('CS' if stroke else 'cs')),
+                pikepdf.ContentStreamInstruction([1], pikepdf.Operator('SCN' if stroke else 'scn'))]
+        s_, e_ = o['start'], o['end']
+        wrapped = (s_ >= 2 and str(ops[s_ - 2].operator) == 'q' and str(ops[s_ - 1].operator) == 'cm'
+                   and str(ops[e_ + 1].operator) == 'Q')
+        if wrapped:
+            before[s_] = setc                      # inside the object's own q ... Q, so nothing leaks
+        else:
+            before[s_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('q'))] + setc
+            after[e_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('Q'))]
+
     # ---------- 4. assemble: origin shift + kept ops ----------
     pl, ptp, pr, pb = PAGE_MM
     ox = X0 + pl * PT
@@ -289,7 +305,14 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference"):
     W = (pr - pl) * PT
     H = (pb - ptp) * PT
     out = [pikepdf.ContentStreamInstruction([1, 0, 0, 1, _num(-ox), _num(-oy)], pikepdf.Operator('cm'))]
-    out += [ins for i, ins in enumerate(new_ops) if i not in delete]
+    for i, ins in enumerate(new_ops):
+        if i in delete:
+            continue
+        if i in before:
+            out += before[i]
+        out.append(ins)
+        if i in after:
+            out += after[i]
     data = pikepdf.unparse_content_stream(out)
 
     pdf = pikepdf.open(src.path)

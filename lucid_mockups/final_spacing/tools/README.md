@@ -9,3 +9,6 @@ coordinates only. Outlines, Pantone spot colors, line weights, dieline and dimen
 - `python3 register.py out/label.pdf` compares the left column to the designers' screenshot (`shot.png`)
 
 Needs: `pip install pikepdf pymupdf pillow numpy`. Units are mm from the top-left cut corner, y down.
+
+Color variants: `build_pdf(src, placer, out, recolor={16: '/CS2'})` recolors object 16 (the rule above
+DIETARY SUPPLEMENT) with a spot ink already in the file: `/CS0` Pantone 2728 C, `/CS1` 2758 C, `/CS2` 1255 C.
