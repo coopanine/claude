@@ -12,3 +12,6 @@ Needs: `pip install pikepdf pymupdf pillow numpy`. Units are mm from the top-lef
 
 Color variants: `build_pdf(src, placer, out, recolor={16: '/CS2'})` recolors object 16 (the rule above
 DIETARY SUPPLEMENT) with a spot ink already in the file: `/CS0` Pantone 2728 C, `/CS1` 2758 C, `/CS2` 1255 C.
+
+v2 (Lucid logo centered between the top fold crease and the dashed cap line, 0.96 mm lower):
+`python3 build.py params_v2.json out/`. Earlier files are in `../previous/`.

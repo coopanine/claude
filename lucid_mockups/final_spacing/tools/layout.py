@@ -25,7 +25,7 @@ DEFAULTS = {
     # ---- lid zone (between top fold crease y=8.5 and lid/body crease y=53.5)
     "lid": {
         "logo_dx": "auto",               # "auto" = centre the logo on the front axis; or a number (mm, + = right)
-        "logo_dy": 0.0,
+        "logo_dy": 0.0,                  # number (mm, + = down) or "center" = centred between top crease and dashed cap line
         "title_scale": 1.0,              # TESTIDE + tagline scaled together about the front axis
         "title_pos": "center",           # "center" = equal white space to dashed cap line above and crease below
                                          # "keep" = keep the block's vertical centre where it is; or number = dy (mm, + = down)
@@ -112,7 +112,12 @@ def solve(src, params=None):
     D = P['lid']
     lg = src.bbox('logo')
     dx = (axis - (lg[0] + lg[2]) / 2) if D['logo_dx'] == 'auto' else float(D['logo_dx'])
-    pl.shift(E['logo'], dx, D['logo_dy'])
+    if D['logo_dy'] == 'center':            # equal white space to the top fold crease and the dashed cap line
+        lband_top, lband_bot = CREASE_TOP + CREASE_HALF, DASH_TOP
+        ldy = lband_top + (lband_bot - lband_top - (lg[3] - lg[1])) / 2 - lg[1]
+    else:
+        ldy = float(D['logo_dy'])
+    pl.shift(E['logo'], dx, ldy)
     te = src.bbox('testide'); tg = src.bbox('tagline')
     t = float(D['title_scale'])
     blk_top, blk_bot = te[1], tg[3]
