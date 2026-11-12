@@ -123,7 +123,23 @@ LUCID_CAP_H = 4.970        # height of the LUCID capitals inside the logo at v2 
 TESTIDE_CAP_H = 10.699     # TESTIDE capital height (mm)
 
 
-def make2(src, variant='A', gap=5.5, logo_scale=None):
+def _tagline_optical(src, pl, ax):
+    """centre the tagline on its words, letting the trailing asterisk hang outside the centring"""
+    sp = sorted(src.subpaths(ELEMENTS['tagline'][0]), key=lambda s: s[0])
+    words_l, words_r = sp[0][0], max(s[2] for s in sp[:-1])       # last subpath = the asterisk
+    sx, sy, tx, ty = pl.tf(ELEMENTS['tagline'][0])
+    pl.shift(ELEMENTS['tagline'], ax - (sx * (words_l + words_r) / 2 + tx), 0.0)
+
+
+def make2(src, variant='A', gap=5.5, logo_scale=None, optical_tagline=True):
+    pl, extra, geo = _make2(src, variant, gap, logo_scale)
+    if optical_tagline:
+        _tagline_optical(src, pl, geo['axis_front'])
+        geo['tagline'] = pl.final_bbox(ELEMENTS['tagline'])
+    return pl, extra, geo
+
+
+def _make2(src, variant='A', gap=5.5, logo_scale=None):
     if variant == 'A':
         pl, extra, geo = make(src, gap_b=gap, widen_rule=True, logo='back')
         k = logo_scale or TESTIDE_CAP_H / LUCID_CAP_H
