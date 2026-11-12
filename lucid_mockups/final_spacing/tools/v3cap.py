@@ -110,3 +110,67 @@ if __name__ == '__main__':
     render(flat, os.path.join(out, 'label.png'), zoom=3.2)
     render(art, os.path.join(out, 'tex.png'), zoom=20.0 / PT, page_mm=WRAP_PAGE)
     print(json.dumps(geo, indent=1))
+
+
+# ----------------------------------------------------------------------------------------------
+# Nov 12, round 2: two directions to compare
+#   'A' : front of cap = TESTIDE + tagline + POWERED BY badge (as make()), statue enlarged,
+#         Lucid logo on the BACK of the cap scaled so the LUCID letters match TESTIDE's letter height
+#   'B' : front of cap = Lucid logo + TESTIDE + tagline, one stack centred in the 45 mm cap;
+#         body exactly as v2 (POWERED BY badge, statue, rule, bottom text); back of cap blank
+# ----------------------------------------------------------------------------------------------
+LUCID_CAP_H = 4.970        # height of the LUCID capitals inside the logo at v2 size (mm)
+TESTIDE_CAP_H = 10.699     # TESTIDE capital height (mm)
+
+
+def make2(src, variant='A', gap=5.5, logo_scale=None):
+    if variant == 'A':
+        pl, extra, geo = make(src, gap_b=gap, widen_rule=True, logo='back')
+        k = logo_scale or TESTIDE_CAP_H / LUCID_CAP_H
+        E, fb = ELEMENTS, pl.final_bbox
+        lg = fb(E['logo'])                                  # already centred on the back point, cap middle
+        c = ((lg[0] + lg[2]) / 2, (lg[1] + lg[3]) / 2)
+        pl.place(E['logo'], k, c, c)
+        sx, sy, tx, ty = pl.tf(E['logo'][0])
+        big = (-20.0, -20.0, 220.0, 180.0)
+        extra['clip'] = {E['logo'][0]: (0.0, big[1], 120.0, big[3])}
+        extra['clones'] = [(E['logo'][0], (sx, sy, tx + WRAP_MM, ty), (60.0, big[1], WRAP_MM, big[3]))]
+        geo['logo'] = fb(E['logo'])
+        geo['logo_scale_vs_v2'] = k
+        return pl, extra, geo
+    if variant == 'B':
+        pl, G = solve(src, json.load(open(os.path.join(HERE, 'params_v2.json'))))
+        E, fb = ELEMENTS, pl.final_bbox
+        ax = G['axis_front']
+        lg, t, tg = fb(E['logo']), fb(E['testide']), fb(E['tagline'])
+        gap_a = tg[1] - t[3]
+        H = (lg[3] - lg[1]) + gap + (t[3] - t[1]) + gap_a + (tg[3] - tg[1])
+        y0 = (CAP_T + CAP_B) / 2 - H / 2
+        pl.shift(E['logo'], ax - (lg[0] + lg[2]) / 2, y0 - lg[1])
+        y1 = y0 + (lg[3] - lg[1]) + gap
+        pl.shift(E['testide'], 0.0, y1 - t[1])
+        y2 = y1 + (t[3] - t[1]) + gap_a
+        pl.shift(E['tagline'], 0.0, y2 - tg[1])
+        geo = {'axis_front': ax, 'cap_stack_top': y0, 'cap_stack_bottom': y0 + H,
+               'cap_margin_top': y0 - CAP_T, 'cap_margin_bottom': CAP_B - (y0 + H),
+               'gap_logo_testide': gap, 'gap_testide_tagline': gap_a,
+               'logo': fb(E['logo']), 'testide': fb(E['testide']), 'tagline': fb(E['tagline']),
+               'badge': fb(E['powered_frame']), 'statue': fb(E['statue'])}
+        return pl, {}, geo
+    raise ValueError(variant)
+
+
+def build_variant(out_dir, variant, **kw):
+    os.makedirs(out_dir, exist_ok=True)
+    src = Source(os.path.join(HERE, 'src.pdf'))
+    pl, extra, geo = make2(src, variant, **kw)
+    flat = os.path.join(out_dir, 'label.pdf')
+    build_pdf(src, pl, flat, title=f'TESTIDE label - cap layout {variant}', recolor=GOLD_RULE,
+              drop_ids=DASH, **extra)
+    art = os.path.join(out_dir, 'art.pdf')
+    build_pdf(src, pl, art, recolor=GOLD_RULE, page_mm=WRAP_PAGE, keep_mm=(-5, 0, 196, 157),
+              drop_layers=('/MC2', '/MC3'), drop_ids=DASH, **extra)
+    render(art, os.path.join(out_dir, 'tex.png'), zoom=20.0 / PT)
+    render(flat, os.path.join(out_dir, 'label_300dpi.png'), zoom=300 / 72)
+    json.dump(geo, open(os.path.join(out_dir, 'geometry.json'), 'w'), indent=1)
+    return geo

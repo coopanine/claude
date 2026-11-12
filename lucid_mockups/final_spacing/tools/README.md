@@ -20,3 +20,6 @@ Cap layout concept (Nov 12, `../../cap_layout_v3/`): `python3 v3cap.py out/` bui
 TESTIDE + tagline + POWERED BY badge centered in the 45 mm cap, statue scaled to the box top line,
 rule and bottom text widened to the statue, Lucid logo on the back of the cap (split across the wrap seam:
 `build_pdf(..., clip={...}, clones=[...])`), dashed cap line removed. `spin3d.py` renders the tube.
+Round 2 (`make2` / `build_variant` in `v3cap.py`): option A = big Lucid logo on the back of the cap
+(LUCID letters scaled to TESTIDE's letter height, x2.153), option B = logo + TESTIDE + tagline on the
+front of the cap with the v2 body.
