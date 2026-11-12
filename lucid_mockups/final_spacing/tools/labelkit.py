@@ -199,7 +199,8 @@ def _num(v):
     return d
 
 
-def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None):
+def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
+              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=()):
     """write a new PDF: transformed art + untouched dieline, cropped to the label, 1:1 scale"""
     ops = src.ops
     objs = src.objs
@@ -212,7 +213,8 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
         delete.add(i)
 
     # ---------- 2. drop objects outside the label region (lid diagrams, swatches, circles) ----------
-    kl, kt, kr, kb = KEEP_MM
+    kl, kt, kr, kb = keep_mm or KEEP_MM
+    drop_layers = set(drop_layers); drop_ids = set(drop_ids)
 
     def inside(m):
         return m[0] >= kl and m[2] <= kr and m[1] >= kt and m[3] <= kb
@@ -223,7 +225,7 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
         if o['op'] in ('f', 'S', 'B', 'F', 'f*', 'B*', 's', 'b'):
             if o.get('clip'):
                 continue
-            if not inside(o['mm']):
+            if (not inside(o['mm'])) or o.get('layer') in drop_layers or o['id'] in drop_ids:
                 s, e = o['start'], o['end']
                 wrapped = (s >= 2 and str(ops[s - 2].operator) == 'q' and str(ops[s - 1].operator) == 'cm'
                            and str(ops[e + 1].operator) == 'Q')
@@ -246,7 +248,7 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
                 elif op in ('Tj', 'TJ', "'", '"'):
                     px, py = line[4], line[5]
                     m = ((px - X0) / PT, (YTOP - py) / PT)
-                    if not (kl <= m[0] <= kr and kt <= m[1] <= kb):
+                    if not (kl <= m[0] <= kr and kt <= m[1] <= kb) or o.get('layer') in drop_layers:
                         delete.add(i)
 
     # ---------- 3. rewrite coordinates of transformed objects ----------
@@ -299,7 +301,7 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             after[e_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('Q'))]
 
     # ---------- 4. assemble: origin shift + kept ops ----------
-    pl, ptp, pr, pb = PAGE_MM
+    pl, ptp, pr, pb = page_mm or PAGE_MM
     ox = X0 + pl * PT
     oy = YTOP - pb * PT
     W = (pr - pl) * PT
@@ -352,14 +354,14 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
     return {'page_w_mm': (pr - pl), 'page_h_mm': (pb - ptp), 'origin_pt': (ox, oy)}
 
 
-def render(pdf_path, png_path, zoom=4.0, clip_mm=None):
+def render(pdf_path, png_path, zoom=4.0, clip_mm=None, page_mm=None):
     """render with MuPDF. clip_mm = (l,t,r,b) in label mm, or None for the full page"""
     import pymupdf
     doc = pymupdf.open(pdf_path)
     pg = doc[0]
     clip = None
     if clip_mm is not None:
-        pl, ptp, pr, pb = PAGE_MM
+        pl, ptp, pr, pb = page_mm or PAGE_MM
         l, t, r, b = clip_mm
         clip = pymupdf.Rect((l - pl) * PT, (t - ptp) * PT, (r - pl) * PT, (b - ptp) * PT)
     pix = pg.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom), clip=clip, alpha=False)
