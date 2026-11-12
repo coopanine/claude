@@ -199,8 +199,54 @@ def _num(v):
     return d
 
 
+def _xform_path_ops(ops, o, T):
+    """path-construction ops of object o (start..end-1) rewritten with the label-mm affine T=(sx,sy,tx,ty)"""
+    sx, sy, tx, ty = T
+    e_, f_ = o['ctm'][4], o['ctm'][5]
+    assert abs(o['ctm'][0] - 1) < 1e-9 and abs(o['ctm'][3] - 1) < 1e-9 and abs(o['ctm'][1]) < 1e-9 and abs(o['ctm'][2]) < 1e-9
+    TX = X0 * (1 - sx) + PT * tx
+    TY = YTOP * (1 - sy) - PT * ty
+    cx = sx * e_ + TX - e_
+    cy = sy * f_ + TY - f_
+    out = {}
+    for k in range(o['start'], o['end']):
+        ins = ops[k]
+        op = str(ins.operator)
+        a = [float(x) for x in ins.operands]
+        if op in ('m', 'l'):
+            b = [sx * a[0] + cx, sy * a[1] + cy]
+        elif op == 'c':
+            b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2] + cx, sy * a[3] + cy, sx * a[4] + cx, sy * a[5] + cy]
+        elif op in ('v', 'y'):
+            b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2] + cx, sy * a[3] + cy]
+        elif op == 're':
+            b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2], sy * a[3]]
+        elif op == 'h':
+            out[k] = ins
+            continue
+        else:
+            raise ValueError(op)
+        out[k] = pikepdf.ContentStreamInstruction([_num(v) for v in b], ins.operator)
+    return out
+
+
+def _clip_ops(o, rect):
+    """q + clip rectangle (label mm l,t,r,b) expressed in the object's local user space"""
+    l, t, r, b = rect
+    e_, f_ = o['ctm'][4], o['ctm'][5]
+    x = X0 + PT * l - e_
+    y = YTOP - PT * b - f_
+    I = pikepdf.ContentStreamInstruction
+    return [I([], pikepdf.Operator('q')),
+            I([_num(x), _num(y), _num(PT * (r - l)), _num(PT * (b - t))], pikepdf.Operator('re')),
+            I([], pikepdf.Operator('W')), I([], pikepdf.Operator('n'))]
+
+
 def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
-              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=()):
+              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=()):
+    """clip   = {obj_id: (l,t,r,b)}  clip that object (final label mm)
+       clones = [(obj_id, (sx,sy,tx,ty), (l,t,r,b) or None)]  paint an extra copy of the object
+                with its own transform (from the ORIGINAL source position) and optional clip"""
     """write a new PDF: transformed art + untouched dieline, cropped to the label, 1:1 scale"""
     ops = src.ops
     objs = src.objs
@@ -258,31 +304,8 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             continue
         o = objs[i]
         assert o['op'] in ('f', 'S'), o['op']
-        e_, f_ = o['ctm'][4], o['ctm'][5]
-        assert abs(o['ctm'][0] - 1) < 1e-9 and abs(o['ctm'][3] - 1) < 1e-9 and abs(o['ctm'][1]) < 1e-9 and abs(o['ctm'][2]) < 1e-9
-        # page-space affine in pt:  X' = sx*X + TX ; Y' = sy*Y + TY
-        TX = X0 * (1 - sx) + PT * tx
-        TY = YTOP * (1 - sy) - PT * ty
-        # local coords: x' = sx*x + (sx*e + TX - e)
-        cx = sx * e_ + TX - e_
-        cy = sy * f_ + TY - f_
-        for k in range(o['start'], o['end']):
-            ins = ops[k]
-            op = str(ins.operator)
-            a = [float(x) for x in ins.operands]
-            if op in ('m', 'l'):
-                b = [sx * a[0] + cx, sy * a[1] + cy]
-            elif op == 'c':
-                b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2] + cx, sy * a[3] + cy, sx * a[4] + cx, sy * a[5] + cy]
-            elif op in ('v', 'y'):
-                b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2] + cx, sy * a[3] + cy]
-            elif op == 're':
-                b = [sx * a[0] + cx, sy * a[1] + cy, sx * a[2], sy * a[3]]
-            elif op == 'h':
-                continue
-            else:
-                raise ValueError(op)
-            new_ops[k] = pikepdf.ContentStreamInstruction([_num(v) for v in b], ins.operator)
+        for k, ins in _xform_path_ops(ops, o, T).items():
+            new_ops[k] = ins
 
     # ---------- 3b. optional recolour (uses the spot inks already defined in the file) ----------
     before, after = {}, {}
@@ -299,6 +322,22 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
         else:
             before[s_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('q'))] + setc
             after[e_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('Q'))]
+
+    # ---------- 3c. clips and clones ----------
+    I = pikepdf.ContentStreamInstruction
+    for i, rect in (clip or {}).items():
+        o = objs[i]
+        assert o['op'] in ('f', 'S') and i not in (recolor or {})
+        before.setdefault(o['start'], [])
+        before[o['start']] = before[o['start']] + _clip_ops(o, rect)
+        after[o['end']] = [I([], pikepdf.Operator('Q'))] + after.get(o['end'], [])
+    for i, T, rect in clones:
+        o = objs[i]
+        assert o['op'] in ('f', 'S')
+        blk = _clip_ops(o, rect) if rect else [I([], pikepdf.Operator('q'))]
+        xo = _xform_path_ops(ops, o, T)
+        blk += [xo[k] for k in range(o['start'], o['end'])] + [ops[o['end']], I([], pikepdf.Operator('Q'))]
+        after[o['end']] = after.get(o['end'], []) + blk
 
     # ---------- 4. assemble: origin shift + kept ops ----------
     pl, ptp, pr, pb = page_mm or PAGE_MM

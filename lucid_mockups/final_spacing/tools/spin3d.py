@@ -31,7 +31,7 @@ def _sample(tex, x, y, wrap_x=True):
 
 
 class Scene:
-    def __init__(self, tex_png, lid_png, S, size, ss=2, seam_mm=45.0, tex_pxmm=20.0, x_offset_mm=0.0):
+    def __init__(self, tex_png, lid_png, S, size, ss=2, seam_mm=45.0, tex_pxmm=20.0, x_offset_mm=0.0, y_offset_mm=0.0):
         """S = output px per mm; size = (w, h) output px; seam_mm = cap height (mm below the top edge)"""
         self.S, self.ss, (self.Wp, self.Hp), self.seam = S, ss, size, seam_mm
         Sx = S * ss
@@ -45,7 +45,7 @@ class Scene:
         top_ext = H_MM / 2 * math.cos(PHI) + R * math.sin(PHI)
         bot_ext = H_MM / 2 * math.cos(PHI) + R * math.sin(PHI)
         cx = w / 2 + x_offset_mm * Sx
-        cy = h / 2 - 0.035 * h + (top_ext - bot_ext) / 2 * Sx
+        cy = h / 2 - 0.035 * h + (top_ext - bot_ext) / 2 * Sx + y_offset_mm * Sx
         self.cx, self.cy, self.Sx = cx, cy, Sx
         xs = (np.arange(w) + 0.5 - cx) / Sx
         ys = (cy - (np.arange(h) + 0.5)) / Sx
