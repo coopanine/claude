@@ -23,3 +23,9 @@ rule and bottom text widened to the statue, Lucid logo on the back of the cap (s
 Round 2 (`make2` / `build_variant` in `v3cap.py`): option A = big Lucid logo on the back of the cap
 (LUCID letters scaled to TESTIDE's letter height, x2.153), option B = logo + TESTIDE + tagline on the
 front of the cap with the v2 body.
+
+Final Option A (Nov 16, `../../option_a_proof/`):
+- `python3 final_a.py out/final_A.pdf` builds the final artwork: option A plus `precise.refine()` (Protocol stack
+  re-solved on exact flat-glyph metrics so its gaps are exactly equal; POWERED BY text centred in its frame).
+- `python3 proof_a.py out/final_A.pdf out/proof.pdf [4views.jpg]` builds the 4-page A3 spacing proof. Every number
+  is measured by `precise.py` (exact Bezier extrema, flat baselines and cap tops), never typed by hand.
