@@ -17,22 +17,52 @@ import final_b
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-def make(src):
+def cap_layout(mode, hL, hT, hG, lock, bridge):
+    """returns (logo_scale, top margin, logo gap, bottom gap) for a cap spacing mode; heights in mm"""
+    Z = CAP_B - CAP_T
+    if mode == 'centred':          # v1 of option C: equal gaps = lockup gap, stack centred
+        m = (Z - (hL + hT + hG + 2 * lock)) / 2
+        return 1.0, m, lock, m
+    if mode == 'bridge':           # tagline -> cap line = cap line -> badge; top margin = logo gap
+        b = bridge
+        x = (Z - b - hG - lock - hT - hL) / 2
+        return 1.0, x, x, b
+    if mode == 'thirds':           # top margin = logo gap = tagline -> cap line
+        x = (Z - (hL + hT + hG + lock)) / 3
+        return 1.0, x, x, x
+    if mode == 'logo_up':          # TESTIDE + tagline stay centred as before, logo up: top margin = logo gap
+        m = (Z - (hL + hT + hG + 2 * lock)) / 2
+        t_top = CAP_T + m + hL + lock
+        x = (t_top - CAP_T - hL) / 2
+        return 1.0, x, x, m
+    if mode == 'rhythm':           # every cap space = the body rhythm (cap line -> badge); logo grows to fill
+        b = bridge
+        k = (Z - 3 * b - hT - hG - lock) / hL
+        return k, b, b, b
+    raise ValueError(mode)
+
+
+def make(src, cap_mode='thirds'):
     pl, G = solve(src, json.load(open(os.path.join(HERE, 'params_v2.json'))))
     ax = G['axis_front']
-    geo = {'axis': ax}
-    # ---- cap: logo / TESTIDE / tagline, equal gaps (the approved TESTIDE -> tagline gap), centred ----
+    geo = {'axis': ax, 'cap_mode': cap_mode}
+    # ---- cap: logo / TESTIDE / tagline ----
     lg, t, tg = ink(src, pl, E['logo']), ink(src, pl, E['testide']), ink(src, pl, E['tagline'])
-    gap = tg[1] - t[3]
-    H = (lg[3] - lg[1]) + gap + (t[3] - t[1]) + gap + (tg[3] - tg[1])
-    y0 = (CAP_T + CAP_B) / 2 - H / 2
+    lock = tg[1] - t[3]                                  # approved TESTIDE -> tagline gap, kept
+    bridge = TOPLINE - CAP_B                             # cap line -> badge top (body rhythm)
+    k, top, lgap, bot = cap_layout(cap_mode, lg[3] - lg[1], t[3] - t[1], tg[3] - tg[1], lock, bridge)
+    lc = ((lg[0] + lg[2]) / 2, (lg[1] + lg[3]) / 2)
+    pl.place(E['logo'], k, lc, lc)
+    lg = ink(src, pl, E['logo'])
+    y0 = CAP_T + top
     pl.shift(E['logo'], ax - (lg[0] + lg[2]) / 2, y0 - lg[1])
-    y1 = y0 + (lg[3] - lg[1]) + gap
+    y1 = y0 + (lg[3] - lg[1]) + lgap
     pl.shift(E['testide'], ax - (t[0] + t[2]) / 2, y1 - t[1])
-    y2 = y1 + (t[3] - t[1]) + gap
+    y2 = y1 + (t[3] - t[1]) + lock
     pl.shift(E['tagline'], 0.0, y2 - tg[1])
     _tagline_optical(src, pl, ax)
-    geo.update(cap_gap=gap, cap_margin_top=y0 - CAP_T, cap_margin_bottom=CAP_B - (y0 + H))
+    geo.update(logo_scale=k, cap_top=top, logo_gap=lgap, lock_gap=lock, cap_bottom=CAP_B - (y2 + tg[3] - tg[1]),
+               bridge=bridge)
     # ---- body: badge top on the body top line, centred on the axis ----
     fr = ink(src, pl, E['powered_frame'])
     pl.shift(E['powered_frame'] + E['powered_text'], ax - (fr[0] + fr[2]) / 2, TOPLINE - fr[1])
@@ -69,10 +99,10 @@ def make(src):
     return pl, geo
 
 
-def build(out_dir):
+def build(out_dir, cap_mode='thirds'):
     os.makedirs(out_dir, exist_ok=True)
     src = Source(os.path.join(HERE, 'src.pdf'))
-    pl, geo = make(src)
+    pl, geo = make(src, cap_mode)
     build_pdf(src, pl, os.path.join(out_dir, 'label.pdf'), title='TESTIDE label - Option C', recolor=GOLD_RULE, drop_ids=DASH)
     build_pdf(src, pl, os.path.join(out_dir, 'art.pdf'), recolor=GOLD_RULE, page_mm=WRAP_PAGE, keep_mm=(-5, 0, 196, 157),
               drop_layers=('/MC2', '/MC3'), drop_ids=DASH)
@@ -82,6 +112,6 @@ def build(out_dir):
 
 if __name__ == '__main__':
     import sys
-    src, pl, geo = build(sys.argv[1] if len(sys.argv) > 1 else 'vC')
+    src, pl, geo = build(sys.argv[1] if len(sys.argv) > 1 else 'vC', sys.argv[2] if len(sys.argv) > 2 else 'thirds')
     for k, v in geo.items():
-        print(k, [round(x, 3) for x in v] if isinstance(v, tuple) else round(v, 4))
+        print(k, [round(x, 3) for x in v] if isinstance(v, tuple) else (round(v, 4) if isinstance(v, float) else v))
