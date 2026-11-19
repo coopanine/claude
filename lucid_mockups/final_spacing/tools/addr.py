@@ -99,7 +99,11 @@ FDA_OUTER_W = 'warning'       # box width to the outside of its line: 'warning' 
 FDA_LW = 0.65                 # pt, box line weight: the bold stems' weight, ~2/3 of the 0.98 pt outer frame (rev5)
 
 
-def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=FDA_OUTER_W, fda_lw=FDA_LW):
+PROTO = None                  # rev6 Protocol re-set (protocol2.apply parameters); None = rev5 layout
+
+
+def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=FDA_OUTER_W, fda_lw=FDA_LW,
+         proto=PROTO):
     pl, geo = make_c(src, 'thirds')
     info = {}
     clones, extra = [], []
@@ -263,6 +267,10 @@ def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=
         info['fda_lines'] = len(lines)
     info.update(margin=margin, asul_em_mm=sa * upm, space_h=Sh, L_S=L_S, shift_line2=dx, line2_end=line_end,
                 placed=placed, base2=base2)
+    if proto:                                  # ---- 7: rest of the Protocol panel bigger, re-spaced (rev6) ----
+        import protocol2
+        lw = (fda_lw or FDA_LW0) * 25.4 / 72
+        info['proto'] = protocol2.apply(src, pl, proto, fda_half=lw / 2)
     info['embolden'], info['outline'] = embolden, {}
     if bold_w and bold_expand:                # strokes expanded into the fills: no stroked type in the file
         import bold
