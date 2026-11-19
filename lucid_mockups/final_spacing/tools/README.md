@@ -33,8 +33,14 @@ Final Option A (Nov 16, `../../option_a_proof/`):
 Final Option C (Nov 18, `../../final_proof/`): `final_c.py` (logo + TESTIDE + tagline on the cap in even thirds,
 POWERED BY badge back on the body, back of the cap blank, side panels as `final_b.py`).
 
-Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev5.pdf`):
-`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev5.pdf` builds Option C plus:
+Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev6.pdf`):
+`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev6.pdf` builds Option C plus:
+- rev6 (`protocol2.py`, parameters in `addr.PROTO`): FDA box and text unchanged in size (moved down 1.45 mm as one
+  block); everything else in the Protocol panel bigger: title x1.110 (as wide as the FDA box, cap 3.82), numerals
+  x1.110, headings / WARNING / storage x1.166 (WARNING re-broken to 4 lines, longest line = FDA box width, cap 1.74),
+  step captions x1.30 (cap 1.61), Directions columns at +/-15.0 mm. Spacing: frame margins 4.10, section gaps 3.49,
+  heading-to-text 1.80, DIRECTIONS-to-numerals 2.30, numerals-to-captions 1.40, storage-to-FDA box 3.99, FDA
+  box-to-barcode 2.79 (box grouped with the barcode as a footer). Chosen from 3 variants by a 3-judge review.
 - rev5: FDA box 39.07 mm wide (outside of the line) = the WARNING paragraph's ink width, centred on the panel;
   line 0.65 pt (= the bold stems, ~2/3 of the 0.98 pt frame). Inner top/bottom edges unchanged, line grows outward,
   Protocol equal gaps re-solved to 4.17 mm. Padding to the bold ink: 1.55 sides, 1.63 top, 1.39 bottom (descenders).

@@ -140,15 +140,20 @@ def steps_apply(src, pl, s_steps, s_num, D, cx):
         pl.shift(col, targets[c] - ccx, 0.0)
 
 
-def restack(src, pl, fixed, fda_half):
-    """Protocol stack: the gaps in `fixed` as given, all others equal (7 equal gaps incl. top and bottom margins)"""
+def restack(src, pl, fixed, fda_half, offsets=None):
+    """Protocol stack: the gaps in `fixed` as given (mm); every other gap = eq + offsets.get(gap, 0), eq solved so the
+    stack fills the frame exactly. Gap names (precise.ORDER): a frame-title, b title-DIRECTIONS, c DIRECTIONS-numerals,
+    d numerals-steps, e steps-WARNING, f WARNING-text, g text-STORAGE, h STORAGE-text, i text-FDA box, j FDA box-barcode,
+    k barcode-frame. Text gaps run baseline to cap/ascender top; box gaps to the outside of the line."""
+    offsets = offsets or {}
     M = protocol_metrics(src, pl, fda_half=fda_half)
     heights = {g: M[bk] - M[tk] for g, tk, bk, _ in ORDER}
     inner = M['inner_bot'] - M['inner_top']
-    eq = (inner - sum(heights.values()) - sum(fixed.values())) / 7.0
+    free = [g for g in 'abcdefghijk' if g not in fixed]
+    eq = (inner - sum(heights.values()) - sum(fixed.values()) - sum(offsets.get(g, 0.0) for g in free)) / len(free)
     y = M['inner_top']
     for g, tk, bk, grp in ORDER:
-        y += fixed.get(g, eq)
+        y += fixed[g] if g in fixed else eq + offsets.get(g, 0.0)
         dy = y - M[tk]
         for gname in (grp if isinstance(grp, tuple) else (grp,)):
             pl.shift(E[gname], 0.0, dy)
@@ -198,6 +203,6 @@ def apply(src, pl, P, fda_half):
         scale_line(src, pl, E[k], P['head'], cx)
     scale_line(src, pl, E['p_stor_text'], P['stor_text'], cx)
     steps_apply(src, pl, P['steps'], P['num'], P['D'], cx)
-    info['equal_gap'] = restack(src, pl, P['gaps'], fda_half)
+    info['equal_gap'] = restack(src, pl, P['gaps'], fda_half, P.get('offsets'))
     info['cuts'] = cuts
     return info

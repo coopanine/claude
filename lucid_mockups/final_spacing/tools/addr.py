@@ -4,6 +4,7 @@ addr.py - final Option C artwork + text corrections (Nov 19):
   2. "( Trigonella" -> "(Trigonella"      (same)
   5. FDA disclaimer in bold (outline bold, bold.py), re-broken to 4 lines; box +1 line, Protocol gaps re-solved (rev4)
   6. FDA box as wide as the WARNING paragraph (39.07 mm) with a 0.65 pt line (rev5)
+  7. rest of the Protocol panel bigger and re-spaced, FDA box unchanged (rev6, protocol2.py)
   2b. "granatum)(POMELLA®)" and "longifolia)(std." get the space that "graecum) (Furosap®)" has (rev3)
   3. "(vegetable capsule). L-leucine." -> "(vegetable capsule), L-leucine."
        the regular comma does not exist in the file; it is the label's bold comma (from "1,450") redrawn to the
@@ -99,7 +100,20 @@ FDA_OUTER_W = 'warning'       # box width to the outside of its line: 'warning' 
 FDA_LW = 0.65                 # pt, box line weight: the bold stems' weight, ~2/3 of the 0.98 pt outer frame (rev5)
 
 
-PROTO = None                  # rev6 Protocol re-set (protocol2.apply parameters); None = rev5 layout
+PROTO = dict(                 # rev6 Protocol re-set (protocol2.apply); None = rev5 layout
+    title='measure',          # THE PROTOCOL as wide as the FDA box (x1.110, cap 3.82)
+    num=1.11,                 # numerals keep the title's cap height, as in rev5
+    body='fit',               # WARNING x1.166: 4 lines, longest line = the FDA box width (39.07 mm), cap 1.74
+    head='body', stor_text='body',   # DIRECTIONS / WARNING / STORAGE headings and the storage line at the same x1.166
+    steps=1.30,               # step captions x1.30 (cap 1.61; wider would crowd the left frame / column gutters)
+    D=15.0,                   # Directions column centres +/-15.0 mm from the axis (was 16.8)
+    measure=39.066, n_lines=4,
+    gaps={'a': 4.10, 'k': 4.10,          # frame margins top / bottom (side margin of the column is 4.43)
+          'c': 2.30,                     # DIRECTIONS -> numerals (tall gold numerals need more air than text)
+          'd': 1.40,                     # numerals -> step captions
+          'f': 1.80, 'h': 1.80},         # WARNING / STORAGE heading -> text
+    offsets={'i': 0.50, 'j': -0.70},     # FDA box grouped with the barcode as a footer
+)                             # remaining section gaps (title-DIRECTIONS, steps-WARNING, text-STORAGE) solve to 3.49
 
 
 def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=FDA_OUTER_W, fda_lw=FDA_LW,
