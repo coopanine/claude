@@ -33,8 +33,13 @@ Final Option A (Nov 16, `../../option_a_proof/`):
 Final Option C (Nov 18, `../../final_proof/`): `final_c.py` (logo + TESTIDE + tagline on the cap in even thirds,
 POWERED BY badge back on the body, back of the cap blank, side panels as `final_b.py`).
 
-Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev3.pdf`):
-`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev3.pdf` builds Option C plus:
+Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev4.pdf`):
+`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev4.pdf` builds Option C plus:
+- rev4: FDA disclaimer in bold (`bold.py`). The typeface has no bold lowercase in the file, so each letter outline is
+  grown by 0.045 mm per side (stem 0.15 -> 0.24 mm, 1.6x, picked by a 3-judge review over 0.07 / 0.09 / 0.11 mm) and
+  saved as plain filled outlines (no strokes: `build_pdf(..., outline={...})`). Letters re-spaced by the same 0.09 mm.
+  Bold no longer fits 3 lines in the 45 mm box, so it is 4 lines, one sentence start per line; the box is one line
+  (2.13 mm) taller and the Protocol panel's 7 equal gaps are re-solved (4.49 -> 4.19 mm). Nothing outside the panel moves.
 - rev3: "granatum)(POMELLA®)" and "longifolia)(std." get a space between the parentheses, matching
   "graecum) (Furosap®)" (the rest of each line moves right 0.337 mm).
 - "ALBION ®" -> "ALBION®" and "( Trigonella" -> "(Trigonella": the rest of each line closes up by one space of the

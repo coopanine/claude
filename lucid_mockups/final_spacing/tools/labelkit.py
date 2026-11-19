@@ -244,7 +244,7 @@ def _clip_ops(o, rect):
 
 def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
               page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=(), extra=(),
-              embolden=None):
+              embolden=None, outline=None):
     """clip   = {obj_id: (l,t,r,b)}  clip that object (final label mm)
        clones = [(obj_id, (sx,sy,tx,ty), (l,t,r,b) or None)]  paint an extra copy of the object
                 with its own transform (from the ORIGINAL source position) and optional clip"""
@@ -343,6 +343,27 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             after[e_] = [I([], pikepdf.Operator('Q'))] + after.get(e_, [])
         new_ops[e_] = I([], pikepdf.Operator('B'))
 
+    # ---------- 3b''. outline: replace an object's path with new contours (final label mm), same paint op ----------
+    #   outline = {obj_id: [[('m',(x,y)), ('l',(x,y)), ..., ('h',)], ...]}  (used for expanded bold: no strokes left)
+    replace = {}
+    for i, contours in (outline or {}).items():
+        o = objs[i]
+        assert o['op'] == 'f' and i not in (embolden or {}), (i, o['op'])
+        e_, f_ = o['ctm'][4], o['ctm'][5]
+        def P(x, y):
+            return [_num(X0 + PT * x - e_), _num(YTOP - PT * y - f_)]
+        path = []
+        for con in contours:
+            for seg in con:
+                if seg[0] == 'm':
+                    path.append(I(P(*seg[1]), pikepdf.Operator('m')))
+                elif seg[0] == 'l':
+                    path.append(I(P(*seg[1]), pikepdf.Operator('l')))
+                elif seg[0] == 'h':
+                    path.append(I([], pikepdf.Operator('h')))
+        replace[o['start']] = path
+        delete.update(range(o['start'] + 1, o['end']))
+
     # ---------- 3c. clips and clones ----------
     for i, rect in (clip or {}).items():
         o = objs[i]
@@ -394,7 +415,10 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             continue
         if i in before:
             out += before[i]
-        out.append(ins)
+        if i in replace:
+            out += replace[i]
+        else:
+            out.append(ins)
         if i in after:
             out += after[i]
     data = pikepdf.unparse_content_stream(out)

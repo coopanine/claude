@@ -92,7 +92,7 @@ BOLD_W = 0.09                 # outline-bold stroke width, mm (regular stem 0.15
 BOLD_CUTS = (6, 12, 19)       # FDA disclaimer in 4 lines, one sentence per line start
 
 
-def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS):
+def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True):
     pl, geo = make_c(src, 'thirds')
     info = {}
     clones, extra = [], []
@@ -242,7 +242,11 @@ def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS):
         info['fda_lines'] = len(lines)
     info.update(margin=margin, asul_em_mm=sa * upm, space_h=Sh, L_S=L_S, shift_line2=dx, line2_end=line_end,
                 placed=placed, base2=base2)
-    info['embolden'] = embolden
+    info['embolden'], info['outline'] = embolden, {}
+    if bold_w and bold_expand:                # strokes expanded into the fills: no stroked type in the file
+        import bold
+        info['outline'] = bold.expand(src, pl, list(embolden), bold_w)
+        info['embolden'] = {}
     return pl, clones, extra, info
 
 
@@ -250,7 +254,7 @@ def build(out_pdf, out_png=None, dpi=300, **kw):
     src = Source('src.pdf')
     pl, clones, extra, info = make(src, **kw)
     build_pdf(src, pl, out_pdf, title='TESTIDE label - final', recolor=RECOLOR, drop_ids=list(DASH) + [PERIOD],
-              clones=clones, extra=extra, embolden=info.pop('embolden'))
+              clones=clones, extra=extra, embolden=info.pop('embolden'), outline=info.pop('outline'))
     if out_png:
         render(out_pdf, out_png, zoom=dpi / 72.0)
     return info

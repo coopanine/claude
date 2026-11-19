@@ -83,3 +83,28 @@ def apply(src, pl, W, cuts, centre):
     for gid, (dx, dy) in moves.items():
         pl.shift([gid], dx, dy)
     return {gid: W for gid in moves}, lines, pitch
+
+
+def expand(src, pl, ids, W, tol=0.0003):
+    """outline bold as plain filled outlines (strokes expanded): each glyph's final outline grown by W/2 with round
+    corners (exactly fill + round-join stroke of width W). Returns {id: contours in final label mm}"""
+    from fontrank import label_polys, PX
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    out = {}
+    for i in ids:
+        g = None
+        for p in label_polys(src, pl, i):
+            if len(p) < 3:
+                continue
+            q = Polygon([(x / PX, y / PX) for x, y in p]).buffer(0)
+            g = q if g is None else g.symmetric_difference(q)
+        e = g.buffer(W / 2, quad_segs=16, join_style='round').simplify(tol)
+        cons = []
+        for pg in ([e] if e.geom_type == 'Polygon' else list(e.geoms)):
+            pg = orient(pg, 1.0)
+            for ring in [pg.exterior] + list(pg.interiors):
+                c = list(ring.coords)[:-1]
+                cons.append([('m', c[0])] + [('l', q) for q in c[1:]] + [('h',)])
+        out[i] = cons
+    return out
