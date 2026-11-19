@@ -2,6 +2,7 @@
 addr.py - final Option C artwork + text corrections (Nov 19):
   1. "ALBION ®" -> "ALBION®"            (stray space removed; rest of the line closes up by one space)
   2. "( Trigonella" -> "(Trigonella"      (same)
+  5. FDA disclaimer in bold (outline bold, bold.py), re-broken to 4 lines; box +1 line, Protocol gaps re-solved (rev4)
   2b. "granatum)(POMELLA®)" and "longifolia)(std." get the space that "graecum) (Furosap®)" has (rev3)
   3. "(vegetable capsule). L-leucine." -> "(vegetable capsule), L-leucine."
        the regular comma does not exist in the file; it is the label's bold comma (from "1,450") redrawn to the
@@ -87,7 +88,11 @@ def asul_thin(gs, gname, sa, x_left, base, d):
     return cons, R - L
 
 
-def make(src):
+BOLD_W = 0.09                 # outline-bold stroke width, mm (regular stem 0.15 -> ~0.24)
+BOLD_CUTS = (6, 12, 19)       # FDA disclaimer in 4 lines, one sentence per line start
+
+
+def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS):
     pl, geo = make_c(src, 'thirds')
     info = {}
     clones, extra = [], []
@@ -220,16 +225,32 @@ def make(src):
     dx = new_M - m_box[0]
     pl.shift(d2['ids'], dx, 0.0)
     line_end = ink(src, pl, d2['ids'])[2]
+
+    # ---- 5: FDA disclaimer in bold (rev4) ----
+    embolden = {}
+    if bold_w:
+        import bold, precise
+        fb = ink(src, pl, E['p_fda_box'])
+        centre = (fb[0] + fb[2]) / 2
+        embolden, lines, pitch = bold.apply(src, pl, bold_w, bold_cuts, centre)
+        extra_lines = len(lines) - 3
+        if extra_lines:
+            l, t, r, b = pl.final_bbox(E['p_fda_box'])
+            pl.set_rect(E['p_fda_box'][0], l, t, r, b + extra_lines * pitch)
+        rs = precise.refine(src, pl)          # Protocol stack: equal gaps re-solved around the taller box
+        info['protocol_equal_gap'] = rs['equal_gap']
+        info['fda_lines'] = len(lines)
     info.update(margin=margin, asul_em_mm=sa * upm, space_h=Sh, L_S=L_S, shift_line2=dx, line2_end=line_end,
                 placed=placed, base2=base2)
+    info['embolden'] = embolden
     return pl, clones, extra, info
 
 
-def build(out_pdf, out_png=None, dpi=300):
+def build(out_pdf, out_png=None, dpi=300, **kw):
     src = Source('src.pdf')
-    pl, clones, extra, info = make(src)
+    pl, clones, extra, info = make(src, **kw)
     build_pdf(src, pl, out_pdf, title='TESTIDE label - final', recolor=RECOLOR, drop_ids=list(DASH) + [PERIOD],
-              clones=clones, extra=extra)
+              clones=clones, extra=extra, embolden=info.pop('embolden'))
     if out_png:
         render(out_pdf, out_png, zoom=dpi / 72.0)
     return info

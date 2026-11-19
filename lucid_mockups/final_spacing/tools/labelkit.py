@@ -243,7 +243,8 @@ def _clip_ops(o, rect):
 
 
 def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
-              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=(), extra=()):
+              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=(), extra=(),
+              embolden=None):
     """clip   = {obj_id: (l,t,r,b)}  clip that object (final label mm)
        clones = [(obj_id, (sx,sy,tx,ty), (l,t,r,b) or None)]  paint an extra copy of the object
                 with its own transform (from the ORIGINAL source position) and optional clip"""
@@ -323,8 +324,26 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             before[s_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('q'))] + setc
             after[e_] = [pikepdf.ContentStreamInstruction([], pikepdf.Operator('Q'))]
 
-    # ---------- 3c. clips and clones ----------
+    # ---------- 3b'. embolden: fill + stroke the outline in its own fill ink (round joins), width in mm ----------
+    #   embolden = {obj_id: width_mm}; the ink grows by width/2 on every side (classic outline bold)
     I = pikepdf.ContentStreamInstruction
+    for i, wmm in (embolden or {}).items():
+        o = objs[i]
+        assert o['op'] == 'f' and i not in (recolor or {}), (i, o['op'])
+        cs = o['fill_cs']
+        setw = [I([pikepdf.Name(cs)], pikepdf.Operator('CS')), I([1], pikepdf.Operator('SCN')),
+                I([_num(wmm * PT)], pikepdf.Operator('w')), I([1], pikepdf.Operator('j')), I([1], pikepdf.Operator('J'))]
+        s_, e_ = o['start'], o['end']
+        wrapped = (s_ >= 2 and str(ops[s_ - 2].operator) == 'q' and str(ops[s_ - 1].operator) == 'cm'
+                   and str(ops[e_ + 1].operator) == 'Q')
+        if wrapped:
+            before[s_] = before.get(s_, []) + setw
+        else:
+            before[s_] = before.get(s_, []) + [I([], pikepdf.Operator('q'))] + setw
+            after[e_] = [I([], pikepdf.Operator('Q'))] + after.get(e_, [])
+        new_ops[e_] = I([], pikepdf.Operator('B'))
+
+    # ---------- 3c. clips and clones ----------
     for i, rect in (clip or {}).items():
         o = objs[i]
         assert o['op'] in ('f', 'S') and i not in (recolor or {})
