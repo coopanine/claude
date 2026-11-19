@@ -92,7 +92,12 @@ BOLD_W = 0.09                 # outline-bold stroke width, mm (regular stem 0.15
 BOLD_CUTS = (6, 12, 19)       # FDA disclaimer in 4 lines, one sentence per line start
 
 
-def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True):
+FDA_LW0 = 0.471               # pt, the box's original line weight
+FDA_OUTER_W = None            # mm, box width to the outside of its line (None = unchanged, 45.25)
+FDA_LW = None                 # pt, box line weight (None = unchanged)
+
+
+def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=FDA_OUTER_W, fda_lw=FDA_LW):
     pl, geo = make_c(src, 'thirds')
     info = {}
     clones, extra = [], []
@@ -237,7 +242,18 @@ def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True):
         if extra_lines:
             l, t, r, b = pl.final_bbox(E['p_fda_box'])
             pl.set_rect(E['p_fda_box'][0], l, t, r, b + extra_lines * pitch)
-        rs = precise.refine(src, pl)          # Protocol stack: equal gaps re-solved around the taller box
+        # box width / line weight (rev5): inner top and bottom edges stay where they are, the line grows outward
+        lw0, lw = FDA_LW0 * 25.4 / 72, (fda_lw or FDA_LW0) * 25.4 / 72
+        l, t, r, b = pl.final_bbox(E['p_fda_box'])                    # line centre
+        it, ib = t + lw0 / 2, b - lw0 / 2
+        if fda_outer_w:
+            cx = (l + r) / 2; half = (fda_outer_w - lw) / 2
+            l, r = cx - half, cx + half
+        else:
+            l, r = l + lw0 / 2 - lw / 2, r - lw0 / 2 + lw / 2
+        pl.set_rect(E['p_fda_box'][0], l, it - lw / 2, r, ib + lw / 2)
+        info['fda_lw_pt'] = fda_lw or FDA_LW0
+        rs = precise.refine(src, pl, fda_half=lw / 2)  # Protocol stack: equal gaps re-solved around the box
         info['protocol_equal_gap'] = rs['equal_gap']
         info['fda_lines'] = len(lines)
     info.update(margin=margin, asul_em_mm=sa * upm, space_h=Sh, L_S=L_S, shift_line2=dx, line2_end=line_end,
@@ -254,7 +270,8 @@ def build(out_pdf, out_png=None, dpi=300, **kw):
     src = Source('src.pdf')
     pl, clones, extra, info = make(src, **kw)
     build_pdf(src, pl, out_pdf, title='TESTIDE label - final', recolor=RECOLOR, drop_ids=list(DASH) + [PERIOD],
-              clones=clones, extra=extra, embolden=info.pop('embolden'), outline=info.pop('outline'))
+              clones=clones, extra=extra, embolden=info.pop('embolden'), outline=info.pop('outline'),
+              linewidth={E['p_fda_box'][0]: info['fda_lw_pt']} if info.get('fda_lw_pt', FDA_LW0) != FDA_LW0 else None)
     if out_png:
         render(out_pdf, out_png, zoom=dpi / 72.0)
     return info

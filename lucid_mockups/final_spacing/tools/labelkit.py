@@ -244,7 +244,7 @@ def _clip_ops(o, rect):
 
 def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
               page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=(), extra=(),
-              embolden=None, outline=None):
+              embolden=None, outline=None, linewidth=None):
     """clip   = {obj_id: (l,t,r,b)}  clip that object (final label mm)
        clones = [(obj_id, (sx,sy,tx,ty), (l,t,r,b) or None)]  paint an extra copy of the object
                 with its own transform (from the ORIGINAL source position) and optional clip"""
@@ -342,6 +342,20 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
             before[s_] = before.get(s_, []) + [I([], pikepdf.Operator('q'))] + setw
             after[e_] = [I([], pikepdf.Operator('Q'))] + after.get(e_, [])
         new_ops[e_] = I([], pikepdf.Operator('B'))
+
+    # ---------- 3b'''. linewidth: {obj_id: width_pt} for stroked objects ----------
+    for i, wpt in (linewidth or {}).items():
+        o = objs[i]
+        assert o['op'] == 'S', (i, o['op'])
+        s_, e_ = o['start'], o['end']
+        wrapped = (s_ >= 2 and str(ops[s_ - 2].operator) == 'q' and str(ops[s_ - 1].operator) == 'cm'
+                   and str(ops[e_ + 1].operator) == 'Q')
+        setw = [I([_num(wpt)], pikepdf.Operator('w'))]
+        if wrapped:
+            before[s_] = before.get(s_, []) + setw
+        else:
+            before[s_] = before.get(s_, []) + [I([], pikepdf.Operator('q'))] + setw
+            after[e_] = [I([], pikepdf.Operator('Q'))] + after.get(e_, [])
 
     # ---------- 3b''. outline: replace an object's path with new contours (final label mm), same paint op ----------
     #   outline = {obj_id: [[('m',(x,y)), ('l',(x,y)), ..., ('h',)], ...]}  (used for expanded bold: no strokes left)

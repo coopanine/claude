@@ -206,13 +206,13 @@ def gaps_of(M):
     return out
 
 
-def refine(src, pl):
+def refine(src, pl, **metrics_kw):
     """re-solve the Protocol stack on exact metrics; centre the POWERED BY text in its frame"""
     # 1. POWERED BY text: centre its ink box vertically in the frame's outer box
     fr, tx = ink(src, pl, E['powered_frame']), ink(src, pl, E['powered_text'])
     pl.shift(E['powered_text'], 0.0, (fr[1] + fr[3]) / 2 - (tx[1] + tx[3]) / 2)
     # 2. Protocol stack
-    M = protocol_metrics(src, pl)
+    M = protocol_metrics(src, pl, **metrics_kw)
     G0 = gaps_of(M)
     fixed = {'c': G0['c'], 'd': G0['d'], 'f': G0['f'], 'h': G0['f']}       # STORAGE->text = WARNING->text
     heights = {g: M[bk] - M[tk] for g, tk, bk, _ in ORDER}
