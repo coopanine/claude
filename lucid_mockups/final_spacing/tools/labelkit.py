@@ -243,7 +243,7 @@ def _clip_ops(o, rect):
 
 
 def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", recolor=None,
-              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=()):
+              page_mm=None, keep_mm=None, drop_layers=(), drop_ids=(), clip=None, clones=(), extra=()):
     """clip   = {obj_id: (l,t,r,b)}  clip that object (final label mm)
        clones = [(obj_id, (sx,sy,tx,ty), (l,t,r,b) or None)]  paint an extra copy of the object
                 with its own transform (from the ORIGINAL source position) and optional clip"""
@@ -337,6 +337,30 @@ def build_pdf(src, placer, out_path, title="TESTIDE label - spacing reference", 
         blk = _clip_ops(o, rect) if rect else [I([], pikepdf.Operator('q'))]
         xo = _xform_path_ops(ops, o, T)
         blk += [xo[k] for k in range(o['start'], o['end'])] + [ops[o['end']], I([], pikepdf.Operator('Q'))]
+        after[o['end']] = after.get(o['end'], []) + blk
+
+    # ---------- 3d. extra filled paths (new outlines), painted right after an anchor object ----------
+    #   extra = [(anchor_id, cs_name, contours)]; contours = [[('m',(x,y)), ('l',(x,y)), ('c',(x1,y1,x2,y2,x3,y3)), ('h',)], ...]
+    #   coordinates in final label mm; filled with the spot colour cs_name (tint 1), nonzero rule
+    for anchor, cs, contours in extra:
+        o = objs[anchor]
+        assert o['op'] in ('f', 'S') and anchor not in drop_ids
+        e_, f_ = o['ctm'][4], o['ctm'][5]
+        def P(x, y):
+            return [_num(X0 + PT * x - e_), _num(YTOP - PT * y - f_)]
+        blk = [I([], pikepdf.Operator('q')), I([pikepdf.Name(cs)], pikepdf.Operator('cs')), I([1], pikepdf.Operator('scn'))]
+        for con in contours:
+            for seg in con:
+                if seg[0] == 'm':
+                    blk.append(I(P(*seg[1]), pikepdf.Operator('m')))
+                elif seg[0] == 'l':
+                    blk.append(I(P(*seg[1]), pikepdf.Operator('l')))
+                elif seg[0] == 'c':
+                    a = seg[1]
+                    blk.append(I(P(a[0], a[1]) + P(a[2], a[3]) + P(a[4], a[5]), pikepdf.Operator('c')))
+                elif seg[0] == 'h':
+                    blk.append(I([], pikepdf.Operator('h')))
+        blk += [I([], pikepdf.Operator('f')), I([], pikepdf.Operator('Q'))]
         after[o['end']] = after.get(o['end'], []) + blk
 
     # ---------- 4. assemble: origin shift + kept ops ----------
