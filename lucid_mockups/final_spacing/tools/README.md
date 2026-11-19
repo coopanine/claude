@@ -33,8 +33,12 @@ Final Option A (Nov 16, `../../option_a_proof/`):
 Final Option C (Nov 18, `../../final_proof/`): `final_c.py` (logo + TESTIDE + tagline on the cap in even thirds,
 POWERED BY badge back on the body, back of the cap blank, side panels as `final_b.py`).
 
-Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev4.pdf`):
-`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev4.pdf` builds Option C plus:
+Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev5.pdf`):
+`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev5.pdf` builds Option C plus:
+- rev5: FDA box 39.07 mm wide (outside of the line) = the WARNING paragraph's ink width, centred on the panel;
+  line 0.65 pt (= the bold stems, ~2/3 of the 0.98 pt frame). Inner top/bottom edges unchanged, line grows outward,
+  Protocol equal gaps re-solved to 4.17 mm. Padding to the bold ink: 1.55 sides, 1.63 top, 1.39 bottom (descenders).
+  Picked by a 3-judge review of 3 widths x 3 weights (`addr.make(fda_outer_w=, fda_lw=)`).
 - rev4: FDA disclaimer in bold (`bold.py`). The typeface has no bold lowercase in the file, so each letter outline is
   grown by 0.045 mm per side (stem 0.15 -> 0.24 mm, 1.6x, picked by a 3-judge review over 0.07 / 0.09 / 0.11 mm) and
   saved as plain filled outlines (no strokes: `build_pdf(..., outline={...})`). Letters re-spaced by the same 0.09 mm.

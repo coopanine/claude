@@ -3,6 +3,7 @@ addr.py - final Option C artwork + text corrections (Nov 19):
   1. "ALBION ®" -> "ALBION®"            (stray space removed; rest of the line closes up by one space)
   2. "( Trigonella" -> "(Trigonella"      (same)
   5. FDA disclaimer in bold (outline bold, bold.py), re-broken to 4 lines; box +1 line, Protocol gaps re-solved (rev4)
+  6. FDA box as wide as the WARNING paragraph (39.07 mm) with a 0.65 pt line (rev5)
   2b. "granatum)(POMELLA®)" and "longifolia)(std." get the space that "graecum) (Furosap®)" has (rev3)
   3. "(vegetable capsule). L-leucine." -> "(vegetable capsule), L-leucine."
        the regular comma does not exist in the file; it is the label's bold comma (from "1,450") redrawn to the
@@ -93,8 +94,9 @@ BOLD_CUTS = (6, 12, 19)       # FDA disclaimer in 4 lines, one sentence per line
 
 
 FDA_LW0 = 0.471               # pt, the box's original line weight
-FDA_OUTER_W = None            # mm, box width to the outside of its line (None = unchanged, 45.25)
-FDA_LW = None                 # pt, box line weight (None = unchanged)
+FDA_OUTER_W = 'warning'       # box width to the outside of its line: 'warning' = the WARNING paragraph's ink width
+                              # (39.07 mm, one centred measure for both blocks); a number in mm; None = unchanged (45.25)
+FDA_LW = 0.65                 # pt, box line weight: the bold stems' weight, ~2/3 of the 0.98 pt outer frame (rev5)
 
 
 def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=FDA_OUTER_W, fda_lw=FDA_LW):
@@ -246,6 +248,9 @@ def make(src, bold_w=BOLD_W, bold_cuts=BOLD_CUTS, bold_expand=True, fda_outer_w=
         lw0, lw = FDA_LW0 * 25.4 / 72, (fda_lw or FDA_LW0) * 25.4 / 72
         l, t, r, b = pl.final_bbox(E['p_fda_box'])                    # line centre
         it, ib = t + lw0 / 2, b - lw0 / 2
+        if fda_outer_w == 'warning':
+            wb = ink(src, pl, E['p_body']); fda_outer_w = wb[2] - wb[0]
+        info['fda_outer_w'] = fda_outer_w
         if fda_outer_w:
             cx = (l + r) / 2; half = (fda_outer_w - lw) / 2
             l, r = cx - half, cx + half
