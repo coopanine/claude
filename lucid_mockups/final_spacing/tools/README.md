@@ -33,8 +33,10 @@ Final Option A (Nov 16, `../../option_a_proof/`):
 Final Option C (Nov 18, `../../final_proof/`): `final_c.py` (logo + TESTIDE + tagline on the cap in even thirds,
 POWERED BY badge back on the body, back of the cap blank, side panels as `final_b.py`).
 
-Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev2.pdf`):
-`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev2.pdf` builds Option C plus:
+Text corrections + address (Nov 19, `../../final_proof/TESTIDE_Final_Proof_Clean_rev3.pdf`):
+`python3 addr.py out/TESTIDE_Final_Proof_Clean_rev3.pdf` builds Option C plus:
+- rev3: "granatum)(POMELLA®)" and "longifolia)(std." get a space between the parentheses, matching
+  "graecum) (Furosap®)" (the rest of each line moves right 0.337 mm).
 - "ALBION ®" -> "ALBION®" and "( Trigonella" -> "(Trigonella": the rest of each line closes up by one space of the
   Facts font (0.328 mm, solved from the label's own text by `spacing_c.py`, rms 0.004 mm).
 - "(vegetable capsule). L-leucine." -> "(vegetable capsule), L-leucine.": the regular comma is not in the file; it is

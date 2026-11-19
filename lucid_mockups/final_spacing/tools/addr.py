@@ -2,6 +2,7 @@
 addr.py - final Option C artwork + text corrections (Nov 19):
   1. "ALBION ®" -> "ALBION®"            (stray space removed; rest of the line closes up by one space)
   2. "( Trigonella" -> "(Trigonella"      (same)
+  2b. "granatum)(POMELLA®)" and "longifolia)(std." get the space that "graecum) (Furosap®)" has (rev3)
   3. "(vegetable capsule). L-leucine." -> "(vegetable capsule), L-leucine."
        the regular comma does not exist in the file; it is the label's bold comma (from "1,450") redrawn to the
        regular weight: head = the regular period's width and height, tail depth scaled by the same factor
@@ -28,6 +29,9 @@ RECOLOR = {16: '/CS2', 14: '/CS0'}
 PERIOD, BOLD_COMMA, BOLD_ONE = 536, 725, 724
 ZINC_TAIL = list(range(640, 652))          # ® TRAACS® zinc
 TRIG = list(range(765, 775))               # Trigonella
+PAREN_REF = (789, 790)                     # ") (" in "graecum) (Furosap®)": the spacing to match
+PAREN_FIX = [(848, list(range(849, 864))),  # "granatum)(POMELLA®) 400 mg" -> "granatum) (POMELLA®) 400 mg"
+             (935, list(range(936, 961)))]  # "longifolia)(std. 2% ..."     -> "longifolia) (std. 2% ..."
 
 
 def compose(A, P):
@@ -93,6 +97,14 @@ def make(src):
     pl.shift(ZINC_TAIL, -S_c, 0.0)
     pl.shift(TRIG, -S_c, 0.0)
     info['facts_space'] = S_c
+
+    # ---- 1b: no space in ")(" on two lines: the rest of each line opens up to match ") (" on the Fenugreek line ----
+    ref = ink(src, pl, [PAREN_REF[1]])[0] - ink(src, pl, [PAREN_REF[0]])[2]
+    info['paren_gap'] = ref
+    for close_id, tail in PAREN_FIX:
+        gap = ink(src, pl, [tail[0]])[0] - ink(src, pl, [close_id])[2]
+        pl.shift(tail, ref - gap, 0.0)
+        info.setdefault('paren_shift', []).append(round(ref - gap, 4))
 
     # ---- 3: comma ----
     per = ink(src, pl, [PERIOD])
