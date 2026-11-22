@@ -1,0 +1,208 @@
+
+<title>TESTIDE Pre-Launch Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap">
+<style>
+/* layout: one editorial column; posts as image + copy rows; the brand's own palette */
+:root{
+  --bg:#FAF8F6; --fg:#101431; --navy:#091A68; --cobalt:#1D46DE; --sand:#AD9368; --gold:#B8860B;
+  --muted:#4A4F6E; --line:#E4DED3; --card:#FFFFFF; --chip:#EEF1FD; --band:#1D46DE; --bandfg:#FAF8F6;
+  --display:'Marcellus',Georgia,serif; --body:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:'Share Tech Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1230; --fg:#F2EFEA; --navy:#C9D3FF; --cobalt:#7F9BFF; --sand:#CDB68E; --gold:#F7B524;
+  --muted:#A6ABC8; --line:#262B52; --card:#151A3D; --chip:#1E2552; --band:#091A68; --bandfg:#FAF8F6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1230; --fg:#F2EFEA; --navy:#C9D3FF; --cobalt:#7F9BFF; --sand:#CDB68E; --gold:#F7B524;
+  --muted:#A6ABC8; --line:#262B52; --card:#151A3D; --chip:#1E2552; --band:#091A68; --bandfg:#FAF8F6; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hero{background:var(--band);color:var(--bandfg);margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 3.2rem);padding-bottom:3rem}
+.hero .wrap{display:grid;gap:1.2rem}
+.label{font-family:var(--mono);text-transform:uppercase;letter-spacing:.16em;font-size:.78rem}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.02;margin:0;text-wrap:balance}
+.hero p{max-width:62ch;margin:0;font-size:1.08rem;opacity:.95}
+.arc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:rgba(250,248,246,.25);margin-top:.8rem}
+.arc div{background:var(--band);padding:1rem 1rem 1rem 0}
+.arc b{display:block;font-family:var(--display);font-weight:400;font-size:1.35rem;margin:.2rem 0}
+section{padding-block:3.2rem;border-bottom:1px solid var(--line)}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,4vw,2.6rem);margin:.2rem 0 1.2rem;text-wrap:balance}
+.intro{max-width:66ch;color:var(--muted);margin:0 0 1.6rem}
+.grid2{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:2.4rem;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.profile img{width:100%;border:1px solid var(--line);border-radius:18px;display:block}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--muted);font-weight:400}
+td.day{font-family:var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tablebox{overflow-x:auto}
+.post{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:2rem;padding-block:2rem;border-top:1px solid var(--line)}
+.post:first-of-type{border-top:0}
+@media (max-width:820px){.post{grid-template-columns:1fr}}
+.post img{width:100%;display:block;border-radius:6px;box-shadow:0 1px 0 var(--line)}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem}
+.chip{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:.72rem;background:var(--chip);color:var(--navy);padding:.25rem .55rem;border-radius:3px}
+.chip.gold{color:var(--gold);background:transparent;border:1px solid var(--gold)}
+.post h3{font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1.15;margin:.2rem 0 .8rem;text-wrap:balance}
+.caption{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1rem 1.1rem;font-size:.96rem;max-width:66ch;min-width:0;overflow-wrap:anywhere}
+.tags{color:var(--cobalt);font-size:.92rem;margin:.6rem 0 0;overflow-wrap:anywhere}
+.note{font-size:.88rem;color:var(--muted);margin-top:.8rem;max-width:66ch}
+.row{display:flex;gap:.6rem;align-items:center;margin-top:.8rem;flex-wrap:wrap}
+button{font:inherit;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:.75rem;background:transparent;color:var(--fg);border:1px solid var(--fg);padding:.45rem .8rem;border-radius:3px;cursor:pointer}
+button:hover{background:var(--fg);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
+.slides{display:flex;gap:12px;overflow-x:auto;padding-bottom:.6rem;scroll-snap-type:x mandatory}
+.slides img{width:min(260px,70vw);flex:none;scroll-snap-align:start;border-radius:6px}
+.stories{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.4rem}
+.stories figure{margin:0;min-width:0}
+.stories img{width:100%;border-radius:10px;display:block}
+figcaption{font-size:.9rem;margin-top:.6rem;min-width:0}
+figcaption b{display:block;font-family:var(--mono);font-weight:400;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--muted)}
+.reel{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:2rem;align-items:start}
+@media (max-width:820px){.reel{grid-template-columns:1fr}}
+video{width:100%;border-radius:10px;background:#000;display:block}
+.kit{display:flex;flex-wrap:wrap;gap:1.6rem;align-items:flex-start}
+.kit .av{width:150px;height:150px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+.kit .hl{width:110px;text-align:center;font-size:.85rem}
+.kit .hl img{width:110px;height:110px;border-radius:50%;object-fit:cover;border:1px solid var(--line);display:block;margin-bottom:.4rem}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.6rem}
+.notes h4{font-family:var(--display);font-weight:400;font-size:1.25rem;margin:0 0 .4rem}
+.notes ul{margin:0;padding-left:1.1rem}
+.notes li{margin:.3rem 0}
+.fda{font-size:.85rem;color:var(--muted);border-left:3px solid var(--sand);padding-left:.8rem;max-width:70ch}
+footer{padding-block:2.4rem;color:var(--muted);font-size:.88rem}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class='hero'><div class='wrap'>
+<div class='label'>The Lucid Institute &middot; TESTIDE &middot; pre-launch social, proposed</div>
+<h1>Thousands of Years</h1><p>The brand book&#x27;s opening line becomes the pre-launch story: ingredients with centuries of history, set to a modern standard and a ninety-day protocol. Three weeks move from mystique, to the formula, to the ritual, and every post points to the waitlist.</p><div class='arc'>
+<div><span class='label'>L-21 to L-15</span><b>The Wait</b>Introduce The Lucid Institute and its world before showing a product. Mystique, the monumental type, the statue.</div>
+<div><span class='label'>L-14 to L-8</span><b>The Standard</b>Reveal TESTIDE and open up TST-01: named, branded ingredients with exact amounts.</div>
+<div><span class='label'>L-7 to L-1</span><b>The Protocol</b>Turn the ninety-day ritual into the reason to sign up. Close on the waitlist.</div>
+</div></div></div>
+<section><div class='wrap'><div class='label'>The grid</div><h2>How the profile reads on launch day</h2><div class='grid2'><div class='profile'><img src='img/PROFILE.jpg' alt='Instagram profile preview with the nine pre-launch posts in a three by three grid'></div><div><p class='intro'>Posting order runs from the bottom right of the grid to the top left, so the last post before launch sits first. Handle, launch date and the waitlist page are placeholders until they are set.</p><div class='tablebox'><table><thead><tr><th>Day</th><th>Post</th><th>Format</th><th>Phase</th></tr></thead><tbody>
+<tr><td class='day'>L-21</td><td>F01 &middot; We&#x27;ve been waiting thousands of years for this</td><td>Feed post</td><td>The Wait</td></tr>
+<tr><td class='day'>L-19</td><td>F02 &middot; A higher standard of supplements</td><td>Feed post</td><td>The Wait</td></tr>
+<tr><td class='day'>L-17</td><td>F03 &middot; </td><td>Feed post</td><td>The Wait</td></tr>
+<tr><td class='day'>L-14</td><td>F04 &middot; </td><td>Feed post</td><td>The Standard</td></tr>
+<tr><td class='day'>L-12</td><td>F05 &middot; Inside the formula</td><td>Carousel, 6 slides</td><td>The Standard</td></tr>
+<tr><td class='day'>L-10</td><td>F06 &middot; A formula worthy of the gods</td><td>Feed post</td><td>The Standard</td></tr>
+<tr><td class='day'>L-7</td><td>F07 &middot; </td><td>Feed post</td><td>The Protocol</td></tr>
+<tr><td class='day'>L-4</td><td>F08 &middot; Some things are worth the wait</td><td>Feed post</td><td>The Protocol</td></tr>
+<tr><td class='day'>L-2</td><td>F09 &middot; Join the waitlist</td><td>Feed post</td><td>The Protocol</td></tr>
+<tr><td class='day'>L-21</td><td>S01 &middot; Something old is new again</td><td>Story</td><td>The Wait</td></tr>
+<tr><td class='day'>L-14</td><td>S02 &middot; </td><td>Story</td><td>The Standard</td></tr>
+<tr><td class='day'>L-7</td><td>S03 &middot; </td><td>Story</td><td>The Protocol</td></tr>
+<tr><td class='day'>L-1</td><td>S04 &middot; The wait is almost over</td><td>Story</td><td>The Protocol</td></tr>
+<tr><td class='day'>L-13</td><td>Reel &middot; 360&deg; reveal</td><td>Reel, 10.5 s</td><td>The Standard</td></tr>
+</tbody></table></div></div></div></div></section>
+<section><div class='wrap'><div class='label'>Feed</div><h2>Nine posts, in posting order</h2><p class='intro'>Each image is 1080 &times; 1350. Captions are ready to paste. Posts that carry a structure/function claim show the FDA line on the image and in the caption.</p>
+<article class='post'><div><img src='img/F01.jpg' alt='Post: The Lucid Institute. We&#x27;ve been waiting thousands of years for this' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-21</span><span class='chip'>The Wait</span><span class='chip'>Feed</span></div><h3>F01 &middot; We&#x27;ve been waiting thousands of years for this</h3><div class='caption' id='cap-F01'>We&#x27;ve been waiting thousands of years for this.
+
+The Lucid Institute is a new house of dietary supplements, built on ingredients with long histories and held to a modern standard.
+
+Our first formula arrives soon. Join the waitlist at luciddaily.com.
+
+#TheLucidInstitute #AHigherStandard</div><div class='row'><button type='button' data-copy='cap-F01'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. Brand statement with no product benefit.</div></div></article>
+<article class='post'><div><img src='img/F02.jpg' alt='Post: The Lucid Institute. A higher standard of supplements' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-19</span><span class='chip'>The Wait</span><span class='chip'>Feed</span></div><h3>F02 &middot; A higher standard of supplements</h3><div class='caption' id='cap-F02'>A higher standard of supplements.
+
+Every ingredient named. Every amount on the label. Branded, standardized extracts where they exist. Nothing hidden behind a blend we won&#x27;t explain.
+
+More soon.
+
+#TheLucidInstitute #AHigherStandard</div><div class='row'><button type='button' data-copy='cap-F02'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. Quality and transparency statements that the label supports (all amounts are listed).</div></div></article>
+<article class='post'><div><img src='img/F03.jpg' alt='Post: Introducing. For those building something that lasts' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-17</span><span class='chip'>The Wait</span><span class='chip'>Feed</span></div><h3>F03 &middot; </h3><div class='caption' id='cap-F03'>For those building something that lasts.
+
+The Lucid Institute. Dietary supplements, made in small runs, designed to be taken with intent.
+
+The first formula is close.
+
+#TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F03'>Copy caption</button></div><div class='note'><b>Claims check:</b> None.</div></div></article>
+<article class='post'><div><img src='img/F04.jpg' alt='Post: Introducing. Evolutionary testosterone support' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-14</span><span class='chip'>The Standard</span><span class='chip'>Feed</span><span class='chip gold'>FDA line on image</span></div><h3>F04 &middot; </h3><div class='caption' id='cap-F04'>Introducing TESTIDE.
+
+Evolutionary testosterone support*, from The Lucid Institute. Ninety capsules in a paper tube. Powered by TST-01, our 1,450 mg blend of Tongkat Ali, PrimaVie® Shilajit, Furosap® Fenugreek, POMELLA® Pomegranate and Benfotiamine, with zinc, vitamin D, boron and choline.
+
+For adult men only. Join the waitlist at luciddaily.com.
+
+*These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.
+
+#TESTIDE #TheLucidInstitute #TST01</div><div class='row'><button type='button' data-copy='cap-F04'>Copy caption</button></div><div class='note'><b>Claims check:</b> Structure/function tagline from the label, with asterisk; FDA line on the image and in the caption; &#x27;for adult men only&#x27; included.</div></div></article>
+<article class='post'><div><div class='slides'><img src='img/F05a.jpg' alt='Post: TST-01. Inside the formula. Tongkat Ali, PrimaVie® Shilajit, Furosap® Fenugreek, POMELLA® Pomegranate, Bororganic Boron, Supporting cofactors' loading='lazy'><img src='img/F05b.jpg' alt='Post: TST-01. Tongkat Ali. Eurycoma longifolia, Root extract · 200 mg, Standardized to 2% eurycomanone, From a tree native to Southeast Asia' loading='lazy'><img src='img/F05c.jpg' alt='Post: TST-01. Shilajit. PrimaVie®, Purified extract · 250 mg, A mineral-rich resin from Himalayan rock' loading='lazy'><img src='img/F05d.jpg' alt='Post: TST-01. Fenugreek. Trigonella foenum-graecum, Seed extract · 500 mg, Furosap®, the largest dose in TST-01' loading='lazy'><img src='img/F05e.jpg' alt='Post: TST-01. Pomegranate. Punica granatum, Whole fruit extract · 400 mg, POMELLA®' loading='lazy'><img src='img/F05f.jpg' alt='Post: TST-01. Supporting cofactors. Benfotiamine, 100 mg, Zinc bisglycinate, 3 mg, Vitamin D3, 20 mcg, Boron glycinate, 200 mcg, Choline, 20 mg' loading='lazy'></div></div><div style='min-width:0'><div class='meta'><span class='chip'>L-12</span><span class='chip'>The Standard</span><span class='chip'>Carousel</span></div><h3>F05 &middot; Inside the formula</h3><div class='caption' id='cap-F05'>Inside TST-01.
+
+Four named botanicals, each a branded or standardized extract, plus the cofactors that round out the formula. Swipe through each one, with the exact amount from the label.
+
+Per three-capsule serving: Furosap® Fenugreek 500 mg, POMELLA® Pomegranate 400 mg, PrimaVie® Shilajit 250 mg, Tongkat Ali 200 mg (standardized to 2% eurycomanone), Benfotiamine 100 mg. Also zinc 3 mg, vitamin D 20 mcg, boron 200 mcg, choline 20 mg.
+
+#TESTIDE #TST01 #TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F05'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. Ingredient names and label amounts only; no benefit stated.</div></div></article>
+<article class='post'><div><img src='img/F06.jpg' alt='Post: TESTIDE. A formula worthy of the gods. Built for the mortals' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-10</span><span class='chip'>The Standard</span><span class='chip'>Feed</span></div><h3>F06 &middot; A formula worthy of the gods</h3><div class='caption' id='cap-F06'>A formula worthy of the gods. Built for the mortals.
+
+TESTIDE is made for the man who shows up every morning: three capsules, with food, every day.
+
+Join the waitlist at luciddaily.com.
+
+#TESTIDE #TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F06'>Copy caption</button></div><div class='note'><b>Claims check:</b> Puffery only (brand book line); no benefit or result stated.</div></div></article>
+<article class='post'><div><img src='img/F07.jpg' alt='Post: The Protocol. Three capsules each morning, With food, every day, For ninety days' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-7</span><span class='chip'>The Protocol</span><span class='chip'>Feed</span></div><h3>F07 &middot; </h3><div class='caption' id='cap-F07'>The Protocol.
+
+I. Three capsules each morning.
+II. With food, every day.
+III. For ninety days.
+
+One tube holds thirty mornings. The full protocol is three tubes. Save this for day one.
+
+#TheProtocol #TESTIDE #TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F07'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. Directions exactly as on the label; no outcome promised for the ninety days.</div></div></article>
+<article class='post'><div><img src='img/F08.jpg' alt='Post: TESTIDE. Some things are worth the wait' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-4</span><span class='chip'>The Protocol</span><span class='chip'>Feed</span></div><h3>F08 &middot; Some things are worth the wait</h3><div class='caption' id='cap-F08'>Some things are worth the wait.
+
+TESTIDE launches soon. Waitlist members hear first and get first access to the opening run.
+
+Join at luciddaily.com.
+
+#TESTIDE #TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F08'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. Waitlist perks must match what the site actually offers (TBD).</div></div></article>
+<article class='post'><div><img src='img/F09.jpg' alt='Post: Early access. Join the waitlist. The first run is small. Waitlist members hear first.' loading='lazy'></div><div style='min-width:0'><div class='meta'><span class='chip'>L-2</span><span class='chip'>The Protocol</span><span class='chip'>Feed</span></div><h3>F09 &middot; Join the waitlist</h3><div class='caption' id='cap-F09'>Two days.
+
+The first run of TESTIDE is small, and the waitlist hears first. Join at luciddaily.com or through the link in bio.
+
+#TESTIDE #TheLucidInstitute</div><div class='row'><button type='button' data-copy='cap-F09'>Copy caption</button></div><div class='note'><b>Claims check:</b> None. &#x27;Small first run&#x27; must be true when posted.</div></div></article>
+</div></section>
+<section><div class='wrap'><div class='label'>Stories</div><h2>Four stories</h2><p class='intro'>1080 &times; 1920. Text stays inside the safe zone; add the sticker named under each one in the Instagram app.</p><div class='stories'>
+<figure><img src='img/S01.jpg' alt='Post: The Lucid Institute. Something old is new again' loading='lazy'><figcaption><b>L-21 &middot; S01</b>Poll sticker under the headline: &#x27;Want in first?&#x27; with options &#x27;Yes&#x27; / &#x27;Tell me more&#x27;.</figcaption></figure>
+<figure><img src='img/S02.jpg' alt='Post: Introducing. Evolutionary testosterone support' loading='lazy'><figcaption><b>L-14 &middot; S02</b>Link sticker to luciddaily.com: &#x27;Join the waitlist&#x27;. Place it in the empty band under the tube.</figcaption></figure>
+<figure><img src='img/S03.jpg' alt='Post: The Protocol. Three capsules each morning, With food, every day, For ninety days' loading='lazy'><figcaption><b>L-7 &middot; S03</b>Quiz sticker: &#x27;How many days is the Protocol?&#x27; Options 30 / 60 / 90 (answer 90).</figcaption></figure>
+<figure><img src='img/S04.jpg' alt='Post: Launching soon. The wait is almost over. Join the waitlist for first access.' loading='lazy'><figcaption><b>L-1 &middot; S04</b>Countdown sticker set to launch time, plus a link sticker to luciddaily.com.</figcaption></figure>
+</div></div></section>
+<section><div class='wrap'><div class='label'>Reel</div><h2>360&deg; reveal</h2><div class='reel'><video controls muted playsinline loop poster='img/REEL_COVER.jpg' src='media/TESTIDE_teaser_reel.mp4'></video><div><p class='intro'>Opens on the brand line, then a full 360 degree turn of the final tube (front, Protocol side, Supplement Facts side), then the waitlist card. 1080 x 1920, 30 fps. Add a quiet ambient track in the app.</p><div class='caption' id='cap-reel'>TESTIDE, from every side.
+
+Ninety capsules in a paper tube. Powered by TST-01. Coming soon from The Lucid Institute.
+
+For adult men only. Join the waitlist at luciddaily.com.
+
+*These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.</div><div class='row'><button type='button' data-copy='cap-reel'>Copy caption</button></div></div></div></div></section>
+<section><div class='wrap'><div class='label'>Profile kit</div><h2>Avatar, highlights, bio</h2><div class='kit'><div><img class='av' src='img/AVATAR.jpg' alt='Avatar: the LUCID logo on cobalt'><div class='note'>Avatar</div></div>
+<div class='hl'><img src='img/HL1.jpg' alt='Highlight cover Protocol'>Protocol</div>
+<div class='hl'><img src='img/HL2.jpg' alt='Highlight cover Formula'>Formula</div>
+<div class='hl'><img src='img/HL3.jpg' alt='Highlight cover Waitlist'>Waitlist</div>
+<div class='hl'><img src='img/HL4.jpg' alt='Highlight cover FAQ'>FAQ</div>
+</div><div class='caption' id='cap-bio' style='margin-top:1.6rem'>A higher standard of supplements.
+TESTIDE, our first formula, is coming soon.
+Join the waitlist below.</div><div class='row'><button type='button' data-copy='cap-bio'>Copy bio</button></div></div></section>
+<section><div class='wrap'><div class='label'>Before posting</div><h2>Notes</h2><div class='notes'>
+<div><h4>Set before posting</h4><ul><li>Launch date: the plan counts back from launch day (L-21 to L-1).</li><li>Instagram handle (preview shows @thelucidinstitute as a placeholder).</li><li>luciddaily.com waitlist page live, with the sign-up the posts promise.</li><li>Confirm &#x27;small first run&#x27; and &#x27;waitlist hears first&#x27; are true before F08 and F09 go out.</li></ul></div>
+<div><h4>Claims</h4><ul><li>Only the label tagline is a structure/function claim. It always carries the asterisk and the full FDA statement (on the image and in the caption).</li><li>Ingredient slides state names, amounts and origin only, all from the Supplement Facts panel.</li><li>No disease, result, timeline or sexual-function language; no #lowT / #TRT style hashtags.</li><li>If any post is boosted as an ad, keep copy off personal attributes (no &quot;men over 40&quot;, no &quot;struggling with...&quot;).</li></ul></div>
+<div><h4>Production</h4><ul><li>Type is set in Ashcroft (your licensed files from the packaging handoff) with the exact brand-book palette.</li><li>Small labels use Share Tech Mono as a stand-in for Mono45 Headline (Adobe Fonts); swap it in Figma for final art.</li><li>Product renders come from the final rev6 label artwork, not the older 60-capsule mockups in the brand book.</li><li>Masters are 1080 x 1350 (feed) and 1080 x 1920 (stories, reel) PNG in lucid_social/out/posts.</li></ul></div>
+</div><p class='fda' style='margin-top:1.6rem'>*These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.</p></div></section>
+<footer><div class='wrap'>Proposed by Claude for The Lucid Institute. Images are previews; PNG masters are in the repo under lucid_social/out.</div></footer>
+
+<script>
+document.querySelectorAll('button[data-copy]').forEach(b => b.addEventListener('click', () => {
+  const el = document.getElementById(b.dataset.copy);
+  const txt = el.innerText;
+  const done = () => { const t = b.textContent; b.textContent = 'Copied'; setTimeout(() => b.textContent = t, 1400); };
+  try {
+    navigator.clipboard.writeText(txt).then(done, () => sel(el));
+  } catch (e) { sel(el); }
+  function sel(n) { const r = document.createRange(); r.selectNodeContents(n); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected, press copy'; }
+}));
+</script>
